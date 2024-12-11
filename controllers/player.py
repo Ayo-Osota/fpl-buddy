@@ -11,6 +11,7 @@ class Player:
         self.fitness = player_data.get("chance_of_playing_next_round")
         self.team = player_data.get("team")
         self.bonus = player_data.get("bonus")
+        self.price = player_data.get("now_cost")
 
         self.points_per_game = float(player_data.get("points_per_game", 0.0))
         self.selected_by_percent = float(
@@ -80,22 +81,8 @@ class Player:
         """
         Calculate a player performance score per gw based on various factors.  HOME STRIKER
         """
-        team_data = Team(get_team(self.team, teams))
-        opponent_team = Team(get_team(gw_data["opponent_team"], teams))
 
-        if gw_data["was_home"]:
-            player_strength_type = "strength_attack_home" if self.position == 4 else "strength_defense_home"
-            opponent_strength_type = "strength_defense_away" if self.position == 4 else "strength_attack_away"
-        else:
-            player_strength_type = "strength_attack_away" if self.position == 4 else "strength_defense_away"
-            opponent_strength_type = "strength_defense_home" if self.position == 4 else "strength_attack_home"
-
-        # Retrieve team strengths
-        player_team_strength = getattr(team_data, player_strength_type, 1000)
-        opponent_team_strength = getattr(
-            opponent_team, opponent_strength_type, 1000)
-
-        difficulty_factor = player_team_strength / opponent_team_strength
+        difficulty_factor = match_difficulty_factor(self, gw_data, teams)
 
         xTotal = gw_data['expected_goals'] + gw_data['expected_assists'] + \
             gw_data['expected_goal_involvements']
@@ -110,3 +97,34 @@ class Player:
         normalized_score = max(0, round(total_score, 2))
 
         return normalized_score
+
+    def upcoming_fixture_difficulty(self, fixture, teams):
+        return match_difficulty_factor(self, fixture, teams)
+
+
+def match_difficulty_factor(player, match, teams):
+    team_data = Team(get_team(player.team, teams))
+    opponent_team_id = match.get("opponent_team") or (match.get(
+        "team_h") if player.team == match.get("team_a") else match.get("team_a"))
+
+    if opponent_team_id:
+        opponent_team = Team(get_team(opponent_team_id, teams))
+    else:
+        raise ValueError("No valid opponent team found in the match data")
+
+    was_home = match.get("was_home")
+    team_h = match.get("team_h")
+
+    if was_home or team_h == player.team:
+        player_strength_type = "strength_attack_home" if player.position == 4 else "strength_defense_home"
+        opponent_strength_type = "strength_defense_away" if player.position == 4 else "strength_attack_away"
+    else:
+        player_strength_type = "strength_attack_away" if player.position == 4 else "strength_defense_away"
+        opponent_strength_type = "strength_defense_home" if player.position == 4 else "strength_attack_home"
+
+    # Retrieve team strengths
+    player_team_strength = getattr(team_data, player_strength_type, 1000)
+    opponent_team_strength = getattr(
+        opponent_team, opponent_strength_type, 1000)
+
+    return player_team_strength / opponent_team_strength

@@ -19,7 +19,7 @@ def is_file_outdated(file_path):
     if not os.path.exists(file_path):
         return True
     last_modified_time = os.path.getmtime(file_path)
-    return (datetime.now() - datetime.fromtimestamp(last_modified_time)).days > 10
+    return (datetime.now() - datetime.fromtimestamp(last_modified_time)).days > 0
 
 
 def save_to_csv(data, file):
@@ -165,19 +165,16 @@ for player_data in players:
     price = player_data["now_cost"]
     aggregate_score = total_score / price if price > 0 else 0
 
-    combined_score = aggregate_score - total_difficulty
-
     total_scores.append({
         "ID": player.id,
         "GW played": num_gws,
         "Player": player.name,
         "Performance Score": aggregate_score,
-        "Upcoming Fixtures": total_difficulty,
-        "Combined score": combined_score
+        "Upcoming Fixtures": total_difficulty
     })
 
 df = pd.DataFrame(total_scores)
-df = df.sort_values(by="Combined score", ascending=False)
+df = df.sort_values(by="Performance Score", ascending=False)
 
 print(df)
 
