@@ -1,0 +1,14 @@
+# Ignore the fpl_data directory
+fpl_data/
+
+# Ignore the venv directory
+venv/
+
+# Ignore common system files
+__pycache__/
+*.pyc
+*.pyo
+
+# Ignore OS-specific files
+.DS_Store
+Thumbs.db
