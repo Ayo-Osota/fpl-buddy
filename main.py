@@ -2,6 +2,7 @@ import pandas as pd
 import requests
 import os
 from datetime import datetime
+from controllers.player import Player
 
 BASE_DIR = "fpl_data"
 PLAYER_DATA_FILE = os.path.join(BASE_DIR, "players_data.csv")
@@ -126,12 +127,40 @@ def fetch_gameweek_data(player_id, data_type):
 
 
 players = fetch_data('players').to_dict(orient="records")
-gw_history = fetch_gameweek_data(3, 'history').to_dict(orient="records")
+teams = fetch_data('teams').to_dict(orient="records")
+# gw_history = fetch_gameweek_data(3, 'history').to_dict(orient="records")
 
-print(gw_history)
-print(players)
-# for element in data:
-#     print(element)
+results = []
+total_scores = []
+
+for player_data in players:
+    player = Player(player_data)
+    gw_history = fetch_gameweek_data(
+        player.id, 'history').to_dict(orient="records")
+
+    total_score = 0
+    for gw in gw_history:
+        score = player.calculate_performance_score_per_gw(gw, teams)
+        total_score += score
+
+        results.append({
+            "Player": player.name,
+            "GW": gw["round"],
+            "Fixture": gw["fixture"],
+            "Points": gw["total_points"],
+            "Performance Score": score
+        })
+
+    total_scores.append({
+        "Player": player.name,
+        "Performance Score": total_score
+    })
+
+df = pd.DataFrame(total_scores)
+df = df.sort_values(by="Performance Score", ascending=False)
+
+print(df)
+
 
 # def calculate_player_score(player, holding_gws, fixtures_df, teams_df):
 #     """

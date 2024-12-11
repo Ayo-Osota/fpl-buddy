@@ -1,4 +1,4 @@
-from team import get_team, Team
+from controllers.team import get_team, Team
 
 
 class Player:
@@ -76,12 +76,12 @@ class Player:
         # self.expected_goals_conceded = float(player_data.get("expected_goals_conceded", 0))
         # self.value = player_data.get("value")
 
-    def calculate_performance_score_per_gw(self, gw_data):
+    def calculate_performance_score_per_gw(self, gw_data, teams):
         """
         Calculate a player performance score per gw based on various factors.  HOME STRIKER
         """
-        team_data = Team(get_team(self.team))
-        opponent_team = Team(get_team(gw_data["opponent_team"]))
+        team_data = Team(get_team(self.team, teams))
+        opponent_team = Team(get_team(gw_data["opponent_team"], teams))
 
         if gw_data["was_home"]:
             player_strength_type = "strength_attack_home" if self.position == 4 else "strength_defense_home"
@@ -91,9 +91,9 @@ class Player:
             opponent_strength_type = "strength_defense_home" if self.position == 4 else "strength_attack_home"
 
         # Retrieve team strengths
-        player_team_strength = team_data.get(player_strength_type, 1000)
-        opponent_team_strength = opponent_team.get(
-            opponent_strength_type, 1000)
+        player_team_strength = getattr(team_data, player_strength_type, 1000)
+        opponent_team_strength = getattr(
+            opponent_team, opponent_strength_type, 1000)
 
         difficulty_factor = player_team_strength / opponent_team_strength
 
@@ -101,7 +101,7 @@ class Player:
             gw_data['expected_goal_involvements']
 
         if self.position != 4:
-            xTotal = - gw_data['expected_goals_conceded']
+            xTotal -= gw_data['expected_goals_conceded']
 
         total_score = (
             gw_data['ict_index'] + gw_data['total_points'] + xTotal) * difficulty_factor
