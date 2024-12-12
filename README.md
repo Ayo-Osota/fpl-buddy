@@ -24,6 +24,7 @@ The tool analyzes player performance based on multiple metrics, including:
 - price ✅
 - Upcoming fixture ✅
 - Fixture proof ✅
+- Historic data
 
 
 
