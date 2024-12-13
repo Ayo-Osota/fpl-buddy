@@ -15,16 +15,23 @@ The tool analyzes player performance based on multiple metrics, including:
 - International breaks
 - Team mates fitness
 - Availability/Fitness
-- Upcoming fixtures 
+- Upcoming fixtures ✅
 - Set-piece responsibilities 
 - Opponent strength based on fixture ✅
 - Home/Away performance ✅
-- Minutes played
+- Minutes played ✅
 - points ✅
 - price ✅
 - Upcoming fixture ✅
 - Fixture proof ✅
-- Historic data
+- Historic data (past seasons)
+- Best 15 man pick ✅
+- Best 11 man pick 
+- Reduce performance consideration of benched players where necessary
+- Increase performance consideration of players who have been rested where necessary
+- consider nearer fixtures over farther ones
+- chips usage suggestions
+- differential of the week
 
 
 
