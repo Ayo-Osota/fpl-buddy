@@ -8,6 +8,17 @@ class Player:
         self.name = player_data.get("web_name")
         self.form = float(player_data.get("form", 0.0))
         self.position = player_data.get("element_type")
+
+        match self.position:
+            case 1:
+                self.position_name = "GKP"
+            case 2:
+                self.position_name = "DEF"
+            case 3:
+                self.position_name = "MID"
+            case 4:
+                self.position_name = "FWD"
+
         self.fitness = player_data.get("chance_of_playing_next_round")
         self.team = player_data.get("team")
         self.bonus = player_data.get("bonus")
@@ -82,8 +93,6 @@ class Player:
         Calculate a player performance score per gw based on various factors.  HOME STRIKER
         """
 
-        difficulty_factor = match_difficulty_factor(self, gw_data, teams)
-
         xTotal = gw_data['expected_goals'] + gw_data['expected_assists'] + \
             gw_data['expected_goal_involvements']
 
@@ -91,14 +100,14 @@ class Player:
             xTotal -= gw_data['expected_goals_conceded']
 
         total_score = (
-            gw_data['ict_index'] + gw_data['total_points'] + xTotal) * difficulty_factor
+            gw_data['ict_index'] + gw_data['total_points'] + xTotal)
 
         # Normalize the score
         normalized_score = max(0, round(total_score, 2))
 
         return normalized_score
 
-    def upcoming_fixture_difficulty(self, fixture, teams):
+    def fixture_difficulty(self, fixture, teams):
         return match_difficulty_factor(self, fixture, teams)
 
 

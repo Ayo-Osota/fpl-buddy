@@ -3,6 +3,7 @@ import requests
 import os
 from datetime import datetime
 from controllers.player import Player
+import math
 
 BASE_DIR = "fpl_data"
 PLAYER_DATA_FILE = os.path.join(BASE_DIR, "players_data.csv")
@@ -143,10 +144,14 @@ for player_data in players:
 
     played_gws = [gw for gw in gw_history if gw.get("minutes", 0) > 0]
     total_score = 0
-    total_difficulty = 0
+    previous_difficulty = 0
+    upcoming_difficulty = 0
     for gw in played_gws:
         score = player.calculate_performance_score_per_gw(gw, teams)
         total_score += score
+
+        difficulty = player.fixture_difficulty(gw, teams)
+        previous_difficulty += difficulty
 
         results.append({
             "Player": player.name,
@@ -157,29 +162,96 @@ for player_data in players:
         })
 
     for fixture in fixtures:
-        difficulty = player.upcoming_fixture_difficulty(fixture, teams)
-        total_difficulty += difficulty
+        difficulty = player.fixture_difficulty(fixture, teams)
+        upcoming_difficulty += difficulty
 
     num_gws = len(played_gws)
     average_performance_score = total_score / num_gws if num_gws > 0 else 0
-    price = player_data["now_cost"]
-    aggregate_score = total_score / price if price > 0 else 0
 
-    combined_score = aggregate_score - total_difficulty
+    price = player_data["now_cost"]
+    price_factor = math.log(price + 1)
+    aggregate_score = total_score / price_factor if price > 0 else 0
+
+    total_difficulty = previous_difficulty - upcoming_difficulty
+
+    # combined_score = aggregate_score * total_difficulty
+
+    combined_score = aggregate_score / (1 + abs(total_difficulty))
 
     total_scores.append({
         "ID": player.id,
         "GW played": num_gws,
         "Player": player.name,
+        "Price": player.price / 10,
+        "Position": player.position_name,
         "Performance Score": aggregate_score,
-        "Upcoming Fixtures": total_difficulty,
-        "Combined score": combined_score
+        "Previous Fixtures": previous_difficulty,
+        "Upcoming Fixtures": upcoming_difficulty,
+        "Combined score": combined_score,
     })
 
 df = pd.DataFrame(total_scores)
 df = df.sort_values(by="Combined score", ascending=False)
 
 print(df)
+
+budget = 100.0
+team_size = 15
+position_limits = {"GKP": 2, "DEF": 5, "MID": 5, "FWD": 3}
+
+
+team = []
+temp_team = []
+total_cost = 0
+position_counts = {"GKP": 0, "DEF": 0, "MID": 0, "FWD": 0}
+
+
+def find_least_effective_player(team):
+    """
+    Identify the least effective player based on a modified score calculation.
+    Prioritizes removing high-cost players with lower scores.
+    """
+
+    if not team:
+        raise ValueError(
+            "Team is empty. Cannot find the least effective player.")
+
+    for player in team:
+        player["Combined score"] = player["Combined score"] / \
+            (player["Price"] ** 0.005)
+
+    return min(team, key=lambda x: x["Combined score"])
+
+
+while len(team) < team_size:
+    selected = False
+    for _, row in df.iterrows():
+        position = row["Position"]
+        price = row["Price"]
+
+        # Check position and budget constraints
+        if position_counts[position] < position_limits[position] and (total_cost + price) <= budget and row["Player"] not in [p["Player"] for p in temp_team]:
+            temp_team.append(row)
+            team.append(row)
+            total_cost += price
+            position_counts[position] += 1
+            selected = True
+
+        if not selected:
+
+            least_effective = find_least_effective_player(team)
+            team = [player for player in team if player["Player"]
+                    != least_effective["Player"]]
+            total_cost -= least_effective["Price"]
+            position_counts[least_effective["Position"]] -= 1
+
+
+final_team_df = pd.DataFrame(team)
+print(final_team_df)
+
+# Summary
+print(f"Total Cost: {total_cost:.2f}M")
+print(f"Position Counts: {position_counts}")
 
 
 # def calculate_player_score(player, holding_gws, fixtures_df, teams_df):
