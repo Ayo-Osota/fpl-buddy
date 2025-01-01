@@ -146,9 +146,16 @@ for player_data in players:
     total_score = 0
     previous_difficulty = 0
     upcoming_difficulty = 0
+    current_gw = max(gw["round"] for gw in played_gws) if played_gws else 1
+
     for gw in played_gws:
         score = player.calculate_performance_score_per_gw(gw, teams)
-        total_score += score
+
+        # Weight score based on gameweek recency
+        weight = 1 + (gw["round"] / current_gw)
+        weighted_score = score * weight
+        
+        total_score += score * weight
 
         difficulty = player.fixture_difficulty(gw, teams)
         previous_difficulty += difficulty
@@ -162,7 +169,11 @@ for player_data in players:
         })
 
     for fixture in fixtures:
-        difficulty = player.fixture_difficulty(fixture, teams)
+        fixture_gw = fixture.get("event", current_gw + 1)
+        
+        weight = 1 + (1 / max((fixture_gw - current_gw), 1))
+        difficulty = player.fixture_difficulty(fixture, teams) * weight
+
         upcoming_difficulty += difficulty
 
     num_gws = len(played_gws)
@@ -238,7 +249,6 @@ while len(team) < team_size:
             selected = True
 
         if not selected:
-
             least_effective = find_least_effective_player(team)
             team = [player for player in team if player["Player"]
                     != least_effective["Player"]]

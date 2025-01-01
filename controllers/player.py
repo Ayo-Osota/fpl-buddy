@@ -108,32 +108,30 @@ class Player:
         return normalized_score
 
     def fixture_difficulty(self, fixture, teams):
-        return match_difficulty_factor(self, fixture, teams)
+        team_data = Team(get_team(self.team, teams))
+        opponent_team_id = fixture.get("opponent_team") or (fixture.get(
+            "team_h") if self.team == fixture.get("team_a") else fixture.get("team_a"))
 
+        if opponent_team_id:
+            opponent_team = Team(get_team(opponent_team_id, teams))
+        else:
+            raise ValueError("No valid opponent team found in the fixture data")
 
-def match_difficulty_factor(player, match, teams):
-    team_data = Team(get_team(player.team, teams))
-    opponent_team_id = match.get("opponent_team") or (match.get(
-        "team_h") if player.team == match.get("team_a") else match.get("team_a"))
+        was_home = fixture.get("was_home")
+        team_h = fixture.get("team_h")
 
-    if opponent_team_id:
-        opponent_team = Team(get_team(opponent_team_id, teams))
-    else:
-        raise ValueError("No valid opponent team found in the match data")
+        if was_home or team_h == self.team:
+            player_strength_type = "strength_attack_home" if self.position == 4 else "strength_defense_home"
+            opponent_strength_type = "strength_defense_away" if self.position == 4 else "strength_attack_away"
+        else:
+            player_strength_type = "strength_attack_away" if self.position == 4 else "strength_defense_away"
+            opponent_strength_type = "strength_defense_home" if self.position == 4 else "strength_attack_home"
 
-    was_home = match.get("was_home")
-    team_h = match.get("team_h")
+        # Retrieve team strengths
+        player_team_strength = getattr(team_data, player_strength_type, 1000)
+        opponent_team_strength = getattr(
+            opponent_team, opponent_strength_type, 1000)
 
-    if was_home or team_h == player.team:
-        player_strength_type = "strength_attack_home" if player.position == 4 else "strength_defense_home"
-        opponent_strength_type = "strength_defense_away" if player.position == 4 else "strength_attack_away"
-    else:
-        player_strength_type = "strength_attack_away" if player.position == 4 else "strength_defense_away"
-        opponent_strength_type = "strength_defense_home" if player.position == 4 else "strength_attack_home"
+        return player_team_strength / opponent_team_strength
 
-    # Retrieve team strengths
-    player_team_strength = getattr(team_data, player_strength_type, 1000)
-    opponent_team_strength = getattr(
-        opponent_team, opponent_strength_type, 1000)
-
-    return player_team_strength / opponent_team_strength
+    
