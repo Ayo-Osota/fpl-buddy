@@ -132,6 +132,6 @@ class Player:
         opponent_team_strength = getattr(
             opponent_team, opponent_strength_type, 1000)
 
-        return player_team_strength / opponent_team_strength
+        return (player_team_strength / opponent_team_strength)
 
     

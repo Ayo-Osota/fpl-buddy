@@ -25,7 +25,8 @@ The tool analyzes player performance based on multiple metrics, including:
 - Fixture proof ✅
 - Historic data (past seasons)
 - Best 15 man pick ✅
-- Best 11 man pick
+- Best 11 man pick ✅
+- max 3 players per team ✅
 - Reduce performance consideration of benched players where necessary
 - Increase performance consideration of players who have been rested where necessary
 - consider nearer fixtures over farther ones ✅
