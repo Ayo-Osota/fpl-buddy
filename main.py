@@ -124,7 +124,7 @@ def fetch_gameweek_data(player_id, data_type):
             save_to_csv(history_past, history_file)
             print(f"Saved past seasons history data for player {player_id} to {history_file}")
         else:
-            print(f"No history data found for player {player_id}.")
+            print(f"No history past data found for player {player_id}.")
 
         if history:
             save_to_csv(history, history_file)
@@ -143,6 +143,7 @@ def fetch_gameweek_data(player_id, data_type):
     # Return the requested data
     requested_file = file_map[data_type]
     if os.path.exists(requested_file):
+        print(f"{data_type} data available for player {player_id}.")
         return pd.read_csv(requested_file)
     else:
         print(f"No {data_type} data available for player {player_id}.")
@@ -175,7 +176,7 @@ def calculate_performance(player, past_history, gw_history, fixtures, teams):
     last_played_gw = max(gw["round"] for gw in played_gws) if played_gws else 1
     next_fixture = min(fixtures, key=lambda x: x["event"])
     
-    past_history_score = 0
+    past_history_score = 1
     total_seasons = len(past_history) if past_history else 1
 
     # Calculate max minutes across all past seasons for normalization
@@ -194,6 +195,7 @@ def calculate_performance(player, past_history, gw_history, fixtures, teams):
         minutes_weight = 1 + (season.get("minutes", 0) / max_minutes)
 
         weight = recency_weight * minutes_weight * DECAY_FACTOR
+        print(f"Season: {season_year}, Score: {score}, Weight: {weight}------------------------------------------------------------------------------------------------------------------------------")
     
         past_history_score += score * weight
 
@@ -213,12 +215,11 @@ def calculate_performance(player, past_history, gw_history, fixtures, teams):
 
     num_gws = len(played_gws)
     player_availability = normalize_fitness(player)
-    total_fitness_score = total_score * past_history_score 
-    average_performance_score = total_fitness_score / num_gws if num_gws > 0 else 0
+    average_performance_score = total_score * past_history_score / num_gws if num_gws > 0 else 0
 
     price = player.price
     price_factor = math.log(price + 1)
-    aggregate_score = total_score / price_factor if price > 0 else 0
+    aggregate_score = average_performance_score / price_factor if price > 0 else 0
 
     total_difficulty = previous_difficulty - upcoming_difficulty
     combined_score = aggregate_score / (1 + abs(total_difficulty))
@@ -234,6 +235,7 @@ def calculate_performance(player, past_history, gw_history, fixtures, teams):
         "Player": player.name,
         "Price": player.price / 10,
         "Position": player.position_name,
+        "Past History Score": past_history_score,
         "Performance Score": aggregate_score,
         "Previous Fixtures": previous_difficulty,
         "Upcoming Fixtures": upcoming_difficulty,
@@ -251,11 +253,12 @@ def select_team(df):
     total_cost = 0
     position_counts = {"GKP": 0, "DEF": 0, "MID": 0, "FWD": 0}
 
-    current_team_playerIds = [328, 311, 110, 82, 433, 4, 9, 3, 16, 324, 238, 6, 152, 185, 120]
+    # current_team_playerIds = [328, 311, 110, 82, 433, 4, 9, 3, 16, 324, 238, 6, 152, 185, 120]
+    current_team_playerIds = [17, 422, 3, 533, 70, 328, 182, 99, 491, 268, 252, 521, 399, 148]
 
     # 🟢 Boost scores for current team players
     df["Priority_Score"] = df["Combined score"]
-    df.loc[df["id"].isin(current_team_playerIds), "Priority_Score"] *= 1.1
+    df.loc[df["ID"].isin(current_team_playerIds), "Priority_Score"] *= 1.1
 
     def find_least_effective_player(team):
         """
