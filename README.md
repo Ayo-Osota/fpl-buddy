@@ -23,7 +23,7 @@ The tool analyzes player performance based on multiple metrics, including:
 - price ✅
 - Upcoming fixture ✅
 - Fixture proof ✅
-- Historic data (past seasons)
+- Historic data (past seasons) ✅
 - Best 15 man pick ✅
 - Best 11 man pick ✅
 - max 3 players per team ✅

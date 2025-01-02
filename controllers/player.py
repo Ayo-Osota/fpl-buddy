@@ -88,7 +88,7 @@ class Player:
         # self.expected_goals_conceded = float(player_data.get("expected_goals_conceded", 0))
         # self.value = player_data.get("value")
 
-    def calculate_performance_score_per_gw(self, gw_data, teams):
+    def calculate_performance_score_per_gw(self, gw_data):
         """
         Calculate a player performance score per gw based on various factors.  HOME STRIKER
         """
