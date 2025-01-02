@@ -19,7 +19,7 @@ class Player:
             case 4:
                 self.position_name = "FWD"
 
-        self.fitness = player_data.get("chance_of_playing_next_round")
+        self.fitness = float(player_data.get("chance_of_playing_next_round", 100.0))
         self.team = player_data.get("team")
         self.bonus = player_data.get("bonus")
         self.price = player_data.get("now_cost")

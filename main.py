@@ -137,6 +137,17 @@ total_scores = []
 
 for player_data in players:
     player = Player(player_data)
+
+    chance_of_playing = player.fitness
+    # Assume fully fit if no data
+    if chance_of_playing is None or pd.isna(chance_of_playing) or (isinstance(chance_of_playing, float) and math.isnan(chance_of_playing)):
+        chance_of_playing = 1.0
+    else:
+        chance_of_playing = chance_of_playing / 100  # Normalize to 0-1 scale
+
+    # Skip if explicitly marked as 0
+    if chance_of_playing == 0:
+        continue
     gw_history = fetch_gameweek_data(
         player.id, 'history').to_dict(orient="records")
     fixtures = fetch_gameweek_data(
@@ -170,18 +181,19 @@ for player_data in players:
 
     for fixture in fixtures:
         fixture_gw = fixture.get("event", current_gw + 1)
-        
+
         weight = 1 + (1 / max((fixture_gw - current_gw), 1))
         difficulty = player.fixture_difficulty(fixture, teams) * weight
 
         upcoming_difficulty += difficulty
 
     num_gws = len(played_gws)
-    average_performance_score = total_score / num_gws if num_gws > 0 else 0
+    total_fitness_score = total_score * chance_of_playing
+    average_performance_score = total_fitness_score / num_gws if num_gws > 0 else 0
 
     price = player_data["now_cost"]
     price_factor = math.log(price + 1)
-    aggregate_score = total_score / price_factor if price > 0 else 0
+    aggregate_score = total_score  / price_factor if price > 0 else 0
 
     total_difficulty = previous_difficulty - upcoming_difficulty
 
@@ -199,6 +211,7 @@ for player_data in players:
         "Previous Fixtures": previous_difficulty,
         "Upcoming Fixtures": upcoming_difficulty,
         "Combined score": combined_score,
+        "Fitness": chance_of_playing,
     })
 
 df = pd.DataFrame(total_scores)

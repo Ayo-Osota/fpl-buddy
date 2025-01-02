@@ -1,7 +1,6 @@
 # Fantasy Premier League (FPL) Data Analysis Tool
 
-This project provides a robust data analysis tool for Fantasy Premier League (FPL) enthusiasts, helping users make informed decisions about which players to buy or sell. 
-
+This project provides a robust data analysis tool for Fantasy Premier League (FPL) enthusiasts, helping users make informed decisions about which players to buy or sell.
 
 The tool analyzes player performance based on multiple metrics, including:
 
@@ -11,12 +10,12 @@ The tool analyzes player performance based on multiple metrics, including:
 - Expected assists (xA) ✅
 - expected Goal Involvements (xGI) ✅
 - expected_goals_conceded (xGC) ✅
-- starts 
+- starts
 - International breaks
 - Team mates fitness
-- Availability/Fitness
+- Availability/Fitness ✅
 - Upcoming fixtures ✅
-- Set-piece responsibilities 
+- Set-piece responsibilities
 - Opponent strength based on fixture ✅
 - Home/Away performance ✅
 - Minutes played ✅
@@ -26,14 +25,12 @@ The tool analyzes player performance based on multiple metrics, including:
 - Fixture proof ✅
 - Historic data (past seasons)
 - Best 15 man pick ✅
-- Best 11 man pick 
+- Best 11 man pick
 - Reduce performance consideration of benched players where necessary
 - Increase performance consideration of players who have been rested where necessary
-- consider nearer fixtures over farther ones
+- consider nearer fixtures over farther ones ✅
 - chips usage suggestions
 - differential of the week
-
-
 
 ### Sample Output
 
@@ -45,23 +42,24 @@ The tool analyzes player performance based on multiple metrics, including:
 | Phil Foden     | 480         | 60.0             | 8.5   | 56.5                     | 550            | 0.8727            |
 | Callum Wilson  | 520         | 52.0             | 7.5   | 69.3                     | 450            | 1.1556            |
 
-
 ## Getting Started
 
 1. Clone the repository:
-    ```bash
-    git clone https://github.com/Ayo-Osota/fpl-buddy.git
-    ```
+
+   ```bash
+   git clone https://github.com/Ayo-Osota/fpl-buddy.git
+   ```
 
 2. Install dependencies:
-    ```bash
-    pip install -r requirements.txt
-    ```
+
+   ```bash
+   pip install -r requirements.txt
+   ```
 
 3. Run the bot:
-    ```bash
-    python bot.py
-    ```
+   ```bash
+   python bot.py
+   ```
 
 ### Contributing
 
@@ -83,4 +81,3 @@ Contributions are welcome! Please submit a pull request or open an issue for fea
   <img src="./assets/mail.svg" alt="mail">
   </a>
 </span>
-
