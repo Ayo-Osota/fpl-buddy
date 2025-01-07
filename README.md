@@ -59,7 +59,7 @@ The tool analyzes player performance based on multiple metrics, including:
 
 3. Run the bot:
    ```bash
-   python bot.py
+   python main.py
    ```
 
 ### Contributing

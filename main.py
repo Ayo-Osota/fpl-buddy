@@ -9,8 +9,10 @@ BASE_DIR = "fpl_data"
 BUDDY_TEAM = os.path.join(BASE_DIR, "buddy_team.csv")
 PLAYER_DATA_FILE = os.path.join(BASE_DIR, "players_data.csv")
 TEAMS_DATA_FILE = os.path.join(BASE_DIR, "teams_data.csv")
+GW_HISTORY_PAST_DIR = os.path.join(BASE_DIR, "gameweek_history_past")
 GW_HISTORY_DIR = os.path.join(BASE_DIR, "gameweek_history")
 GW_FIXTURES_DIR = os.path.join(BASE_DIR, "gameweek_fixtures")
+os.makedirs(GW_HISTORY_PAST_DIR, exist_ok=True)
 os.makedirs(GW_HISTORY_DIR, exist_ok=True)
 os.makedirs(GW_FIXTURES_DIR, exist_ok=True)
 
@@ -94,7 +96,7 @@ def fetch_gameweek_data(player_id, data_type):
         raise ValueError("Invalid data type. Use 'history_past', 'history' or 'fixtures'.")
 
     # Paths to the history and fixtures CSVs
-    history_past_file = os.path.join(GW_HISTORY_DIR, f"player_{
+    history_past_file = os.path.join(GW_HISTORY_PAST_DIR, f"player_{
                                 player_id}_history_past.csv")
     history_file = os.path.join(GW_HISTORY_DIR, f"player_{
                                 player_id}_history.csv")
@@ -107,7 +109,7 @@ def fetch_gameweek_data(player_id, data_type):
     }
 
     # Determine if we need to fetch data
-    # TODO: Implement a check for history_past
+    # TODO: Implement a check for history_past  or is_file_outdated(history_past_file)
     if is_file_outdated(history_file) or is_file_outdated(fixtures_file):
         print(f"Fetching data for player {player_id} from API...")
         url = f"https://fantasy.premierleague.com/api/element-summary/{
@@ -121,7 +123,7 @@ def fetch_gameweek_data(player_id, data_type):
         fixtures = data.get("fixtures", [])
 
         if history_past:
-            save_to_csv(history_past, history_file)
+            save_to_csv(history_past, history_past_file)
             print(f"Saved past seasons history data for player {player_id} to {history_file}")
         else:
             print(f"No history past data found for player {player_id}.")
@@ -187,17 +189,22 @@ def calculate_performance(player, past_history, gw_history, fixtures, teams):
     upcoming_difficulty = 0
 
     for season in past_history:
-        score = player.calculate_performance_score_per_gw(season)
-    
-        season_year = int(season["season_name"].split('/')[0])
-        recency_weight = 1 + (CURRENT_SEASON - season_year) / total_seasons
+        if len(past_history):
+            score = player.calculate_performance_score_per_gw(season)
         
-        minutes_weight = 1 + (season.get("minutes", 0) / max_minutes)
+            season_year = int(season["season_name"].split('/')[0])
+            recency_weight = 1 + (CURRENT_SEASON - season_year) / total_seasons
 
-        weight = recency_weight * minutes_weight * DECAY_FACTOR
-        print(f"Season: {season_year}, Score: {score}, Weight: {weight}------------------------------------------------------------------------------------------------------------------------------")
-    
-        past_history_score += score * weight
+            season_minutes = season.get("minutes", 0)
+            
+            minutes_weight = 1 + (season_minutes / max_minutes) if season_minutes > 0 else 1
+
+            weight = recency_weight * minutes_weight * DECAY_FACTOR
+
+            score *= weight
+            past_history_score += score
+            past_history_score = past_history_score / 38
+        
 
     for gw in played_gws:
         score = player.calculate_performance_score_per_gw(gw)
@@ -254,11 +261,12 @@ def select_team(df):
     position_counts = {"GKP": 0, "DEF": 0, "MID": 0, "FWD": 0}
 
     # current_team_playerIds = [328, 311, 110, 82, 433, 4, 9, 3, 16, 324, 238, 6, 152, 185, 120]
-    current_team_playerIds = [17, 422, 3, 533, 70, 328, 182, 99, 491, 268, 252, 521, 399, 148]
+    # current_team_playerIds = [17, 422, 3, 533, 70, 328, 182, 99, 491, 268, 252, 521, 399, 148]
+    current_team_playerIds = [310, 325, 328, 3, 231, 255, 182, 267, 252, 30, 364, 399, 110, 494, 401]
 
     # 🟢 Boost scores for current team players
     df["Priority_Score"] = df["Combined score"]
-    df.loc[df["ID"].isin(current_team_playerIds), "Priority_Score"] *= 1.1
+    df.loc[df["ID"].isin(current_team_playerIds), "Priority_Score"] *= 12
 
     def find_least_effective_player(team):
         """
@@ -312,6 +320,7 @@ def select_team(df):
                 total_cost += price
                 position_counts[position] += 1
                 selected = True
+                print(f"✅ Added '{row['Player']}' to the team.")
 
         if rerun_required:
             # Restart the entire loop to re-sort based on updated Priority_Score
@@ -323,10 +332,15 @@ def select_team(df):
             continue
 
         if not selected:
-            least_effective = find_least_effective_player(team)
-            team = [player for player in team if player["Player"] != least_effective["Player"]]
-            total_cost -= least_effective["Price"]
-            position_counts[least_effective["Position"]] -= 1
+            print("❌ No more players can be added. Removing the least effective player...")
+            print(len(team))
+            print(total_cost)
+            for _ in range(3 if total_cost >= 95.5 else 1):
+                print("Removing player...")
+                least_effective = find_least_effective_player(team)
+                team = [player for player in team if player["Player"] != least_effective["Player"]]
+                total_cost -= least_effective["Price"]
+                position_counts[least_effective["Position"]] -= 1
 
     return pd.DataFrame(team).sort_values(by="Gw score", ascending=False)
 
